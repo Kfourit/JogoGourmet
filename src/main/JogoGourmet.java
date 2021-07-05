@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,22 +14,28 @@ import org.json.*;
 
 
 
-
+/**
+ * Class for the Objective challenge. When instantiated, starts the game bringing
+ * the first pop-up.
+ * @author Tiago Kfouri
+ * @version 1.1
+ */
 public class JogoGourmet{
 
 	JFrame f;
 	
-	List<String> foodList = new ArrayList<String>();
-	List<String> categoryList = new ArrayList<String>();
-	
 	private JSONObject jsonObject;
+	
+	private List<String> foodList = new ArrayList<String>();
+	private List<String> categoryList = new ArrayList<String>();
+	
 	
 	JogoGourmet() throws JSONException{
 	    f=new JFrame();
 	    String jsonFileName = "data.json";
 	    
 	    startJSON(jsonFileName);
-	    //System.out.println(jsonObject);
+	    System.out.println(jsonObject);
 	    startCategoryList();
 
 	    
@@ -38,10 +43,10 @@ public class JogoGourmet{
 	    		-1, JOptionPane.PLAIN_MESSAGE);
 
 	    
-	    // Se apertou OK
-	    if(response == 0) {
+	    // If pressed OK
+	    if(response == JOptionPane.OK_OPTION) {
 	    	
-	    	// Loop de todas as categorias
+	    	// Loop of all categories
 	    	for(int j = 0; j<categoryList.size() + 1; j++) {
 	    		
 	    		String category = "";
@@ -57,12 +62,12 @@ public class JogoGourmet{
 	    		}
 	    		
 		    	
-		    	// Se apertou YES no prato ser a categoria
+	    		// If pressed YES for the category
 		    	if (response == JOptionPane.YES_OPTION) {
-		    		
+		    				    		
 		    		startFoodListFromCategory(category);
 		    		
-		    		// Loop das comidas da categoria
+		    		// Loop of the food on the category
 		    		int i;
 		    		String food = "";
 			    	for (i = 0; i < foodList.size(); i++) {
@@ -71,7 +76,7 @@ public class JogoGourmet{
 				    	response = JOptionPane.showConfirmDialog(f, "O prato que você pensou é " + food + "?", 
 				    			"Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null);
 				    		
-				    	// Se for a comida
+				    	// If it is the food
 				    	if (response == JOptionPane.YES_OPTION) {
 				    		JOptionPane.showConfirmDialog(f, "Acertei de novo!", "Jogo Gourmet", 
 				    		    		-1, JOptionPane.INFORMATION_MESSAGE);
@@ -79,7 +84,7 @@ public class JogoGourmet{
 				    	}
 				    		
 			    	}
-			    	// Se nao for nenhuma das comidas
+			    	// If it is not the food
 			    	if (i >= foodList.size()) {
 			    		String foodInput = JOptionPane.showInputDialog(f, "Qual prato você pensou?", "Desisto",
 			    				JOptionPane.QUESTION_MESSAGE);
@@ -95,7 +100,7 @@ public class JogoGourmet{
 			    	break;
 		    	}
 		    	
-		    	// Se apertou NO no prato ser a categoria, continua o loop para a proxima categoria
+		    	// If pressed NO on the current category, continues loop to the next category
 		    	
 	    	}
 	    	
@@ -104,7 +109,11 @@ public class JogoGourmet{
 	    
 	} 
 	
-	
+	/**
+	 * Writes the jsonObject attribute of this class into the file given. If file doesn't exist,
+	 * creates it and then write on it.
+	 * @param fileName
+	 */
 	private void writeToFile(String fileName) {
 		
 		try {
@@ -126,6 +135,14 @@ public class JogoGourmet{
 	    }
 	}
 	
+	
+	/**
+	 * Receives a category and reads all foods from that category in the
+	 * jsonObject attribute. Saves that list of foods on foodList attribute.
+	 * Must have jsonObject initialized first with the method startJson().
+	 * @param category
+	 * @throws JSONException
+	 */
 	private void startFoodListFromCategory(String category) throws JSONException {
 		
 		JSONArray foodListJSON = jsonObject.getJSONArray(category);
@@ -135,6 +152,12 @@ public class JogoGourmet{
         }
 	}
 	
+	/**
+	 * Reads all categories of the jsonObject attribute. Saves that list in
+	 * the categoryList attribute. 
+	 * Must have jsonObject initialized first with the method startJson().
+	 * @throws JSONException
+	 */
 	private void startCategoryList() throws JSONException {
 		
 		JSONArray categoryListJSON = jsonObject.getJSONArray("categories");
@@ -145,20 +168,48 @@ public class JogoGourmet{
 
 	}
 	
-	private void startJSON(String fileName) {
-		InputStream inputStream = JogoGourmet.class.getResourceAsStream(fileName);
-		if (inputStream == null) {
-            throw new NullPointerException("Cannot find resource file " + fileName);
-        }
+
+	/**
+	 * Reads the file with name fileName and parses the content into JSON.
+	 * The JSON is saved in the jsonObject attribute.
+	 * @param fileName
+	 */
+	private void startJSON (String fileName) {
+		File file = new File(fileName);
+	    Scanner sc;
+	    String fileContent = "";
+	    
+	    checkIfFileExists(fileName);
+	    
+	    // Reading file
+		try {
+			sc = new Scanner(file);
+			
+			// we just need to use \\Z as delimiter to read entire file
+			sc.useDelimiter("\\Z");
+			
+			fileContent = sc.next();
+			System.out.println(fileContent);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// Parsing content into JSON
 		JSONTokener tokener;
 		try {
-			tokener = new JSONTokener(inputStream);
+			tokener = new JSONTokener(fileContent);
 			this.jsonObject = new JSONObject(tokener);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}		
 	}
 	
+	/**
+	 * Adds a new category to the jsonObject attribute. Doesn't change categoryList attribute
+	 * @param category
+	 * @throws JSONException
+	 */
 	private void addCategoryOnJSON (String category) throws JSONException {
 		
 		if (category != null) {
@@ -168,10 +219,38 @@ public class JogoGourmet{
 		
 	}
 	
+	/**
+	 * Adds a new food in a specific category to the jsonObject attribute. Doesn't change
+	 * foodList attribute
+	 * @param food
+	 * @param category
+	 * @throws JSONException
+	 */
 	private void addFoodToCategoryOnJSON (String food, String category) throws JSONException {
 		
 		if (category != null && food != null) {
 			jsonObject.append(category, food);
+		}
+	}
+	
+	/**
+	 * Checks if the file with JSON already exists. If not, creates a default one.
+	 * @param fileName
+	 */
+	private void checkIfFileExists (String fileName) {
+		File file = new File(fileName);
+		boolean exists = file.isFile();
+
+		if (!exists) {
+			try {
+				file.createNewFile();
+				FileWriter myWriter = new FileWriter(fileName);
+			    myWriter.write("{\"massa\":[\"Lasanha\"],\"default\":[\"Bolo de Chocolate\"],\"categories\":[\"massa\"]}");
+			    myWriter.close();
+			    System.out.println("New default file was created");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
